@@ -1,0 +1,17 @@
+# Can the player ONLY regenerate health if their thirst level is max?
+requireFullThirstToRegen: true
+
+# Worlds where thirst is not a valid factor
+blacklistedWorlds:
+  - "world_the_nether"
+
+# If ProtocolLib is installed the hurt animation is disabled
+disabledHurtAnimation: true
+
+timeForThirstToDecreaseInSeconds: 60
+thirstRemovedPerTimerTick: 1.0
+maxThirstBarValue: 20.0
+maxHealthValue: 20.0
+# How many seconds should the timer run for before inflicting damage on the player if thirst is 0
+noThirstBarDamagePerTimerTick: 1.0
+noThirstBarDamageTimerTick: 1.0

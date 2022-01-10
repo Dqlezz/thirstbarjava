@@ -1,0 +1,8 @@
+
+# How much bottled items should replenish
+bottles: 2.0
+# How much each consumable should replenish the thirst bar.
+consumables:
+  0:
+    id: "COOKED_BEEF:0"
+    replenishes: 2.0

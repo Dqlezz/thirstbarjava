@@ -1,0 +1,8 @@
+enabled: true # If the biomes feature is enabled
+global: 1 # Global multiplier
+global-biomes: # Global biomes-specific multiplier (overrides global)
+  DESERT: 1.5
+  RIVER: 0.5
+world-biomes: # Global biomes-specific multiplier (overrides global-biomes)
+  world:
+    OCEAN: 0.9

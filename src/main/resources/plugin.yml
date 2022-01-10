@@ -1,0 +1,6 @@
+name: 'ThirstBar'
+version: '${project.version}'
+main: 'com.haroldstudios.thirstbar.ThirstBar'
+api-version: '1.13'
+authors: ['Harolds', 'Skyslycer']
+description: 'Gives players a thirst bar'
