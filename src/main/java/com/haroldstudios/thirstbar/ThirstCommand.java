@@ -37,8 +37,6 @@ public class ThirstCommand extends CommandBase {
         plugin.reloadConfig();
         Bukkit.getServer().getScheduler().cancelTasks(plugin);
         ConfigValue.initialize(plugin);
-        plugin.startThirstTimer();
-        plugin.startThirstDamageTimer();
         sender.sendMessage("§7[§bThirstBar§7] §aPlugin successfully reloaded.");
     }
 

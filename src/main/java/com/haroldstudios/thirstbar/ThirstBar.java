@@ -7,14 +7,20 @@ import com.haroldstudios.thirstbar.utility.PlayerUtils;
 import me.mattstudios.mf.base.CommandManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.NPC;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class ThirstBar extends JavaPlugin {
 
     private boolean mayDisableHealthPacket = false;
+    private ConcurrentHashMap<UUID, Long> afkMap = new ConcurrentHashMap<>();
+    public Runnable thirstRunnable;
 
     @Override
     public void onEnable() {
@@ -27,7 +33,7 @@ public final class ThirstBar extends JavaPlugin {
         cm.register(new ThirstCommand(this));
         cm.hideTabComplete(true);
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(this, afkMap), this);
 
         if (ConfigValue.isHurtAnimationDisabled()) {
             if (this.getServer().getPluginManager().getPlugin("ProtocolLib") == null) {
@@ -39,11 +45,6 @@ public final class ThirstBar extends JavaPlugin {
         }
 
         this.startThirstTimer();
-        this.startThirstDamageTimer();
-    }
-
-    @Override
-    public void onDisable() {
     }
 
     void startThirstTimer() {
@@ -51,6 +52,18 @@ public final class ThirstBar extends JavaPlugin {
             mayDisableHealthPacket = true;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player instanceof NPC || PlayerUtils.canBypassThirst(player)) continue;
+                if (ConfigValue.isAfkEnabled()) {
+                    if (afkMap.containsKey(player.getUniqueId()) && afkMap.get(player.getUniqueId()) + ConfigValue.getTimeOut() * 100L <= System.currentTimeMillis()) {
+                        if (ConfigValue.isAfkOnlyInWater()) {
+                            Material material = player.getLocation().getBlock().getType();
+                            if (material == Material.WATER) {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+                }
                 int extraHp = 0;
                 if (player.hasPotionEffect(PotionEffectType.ABSORPTION)) {
                     extraHp = 4;
@@ -72,14 +85,7 @@ public final class ThirstBar extends JavaPlugin {
                 player = value;
                 if (player instanceof NPC) continue;
                 player.setFoodLevel(player.getFoodLevel());
-            }
-        }, 20L, (long) ConfigValue.getTimeForThirstToDecreaseInSeconds() * 20);
-    }
-
-    void startThirstDamageTimer() {
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                if (player instanceof NPC || PlayerUtils.canBypassThirst(player))
+                if (PlayerUtils.canBypassThirst(player))
                     continue;
                 if (PlayerUtils.getThirst(player) <= 1.0) {
                     player.damage(ConfigValue.getNoThirstBarDamagePerTimerTick());
@@ -88,7 +94,7 @@ public final class ThirstBar extends JavaPlugin {
                     continue;
                 PlayerUtils.setThirst(player, 0.0);
             }
-        }, 20L, (long) ConfigValue.getNoThirstBarDamageTimerTickInSeconds() * 20);
+        }, 20L, (long) ConfigValue.getTimeForThirstToDecreaseInSeconds() * 20);
     }
 
     public boolean canDisableHealthPacket() {

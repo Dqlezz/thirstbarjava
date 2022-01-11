@@ -1,0 +1,8 @@
+# Afk feature: Stop thirst when player is afk
+enabled: false # If the afk feature should be enabled
+timeout: 300 # The time in seconds when a player is marked as afk
+stop-only-in-water: false # If the thirst should stop going down when afk only when the player is in water
+modes:
+  chat: true # Reset timer when player chats
+  move: true # Reset timer when player moves
+  interact: true # Reset timer when player interacts

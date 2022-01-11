@@ -10,24 +10,25 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerListener implements Listener {
 
     public static final List<Player> namesToCancelFor = new ArrayList<>();
     private final ThirstBar plugin;
+    private final ConcurrentHashMap<UUID, Long> afkMap;
 
-    public PlayerListener(ThirstBar plugin) {
+    public PlayerListener(ThirstBar plugin, ConcurrentHashMap<UUID, Long> afkMap) {
         this.plugin = plugin;
+        this.afkMap = afkMap;
     }
 
     @EventHandler
@@ -36,6 +37,9 @@ public class PlayerListener implements Listener {
         // If player has 0 absorption hearts (new health bar) then give them health. Otherwise, they would be dead.
         if (PlayerUtils.getAbsorptionHearts(player) <= 0.0f) {
             PlayerUtils.setAbsorptionHearts(player, (float) ConfigValue.getMaxHealthValue());
+        }
+        if (ConfigValue.isAfkEnabled()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
         }
     }
 
@@ -48,6 +52,10 @@ public class PlayerListener implements Listener {
 
         // Absorption Hearts now refers to health
         Bukkit.getScheduler().runTaskLater(plugin, () -> PlayerUtils.setAbsorptionHearts(player, (float) ConfigValue.getMaxHealthValue()), 1L);
+
+        if (ConfigValue.isAfkEnabled()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        }
     }
 
     @EventHandler
@@ -62,6 +70,12 @@ public class PlayerListener implements Listener {
     public void onDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
+
+        if (event.getCause() == EntityDamageEvent.DamageCause.POISON && PlayerUtils.getAbsorptionHearts(player) == 1) {
+            event.setCancelled(true);
+            PlayerUtils.setAbsorptionHearts(player, 1);
+            return;
+        }
 
         double newHealth = PlayerUtils.getAbsorptionHearts(player) - event.getDamage();
 
@@ -141,6 +155,38 @@ public class PlayerListener implements Listener {
 
         if (!(PlayerUtils.getAbsorptionHearts(player) <= 0.0f)) return;
         PlayerUtils.setAbsorptionHearts(player, (float) ConfigValue.getMaxHealthValue() + extraHp);
+
+        if (ConfigValue.isAfkEnabled()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event) { // Don't worry about lags, it's only there for adding something to a map
+        if (ConfigValue.isAfkMoveReset()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent event) {
+        if (ConfigValue.isAfkChatReset()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent event) {
+        if (ConfigValue.isAfkInteractReset()) {
+            afkMap.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        if (ConfigValue.isAfkEnabled()) {
+            afkMap.remove(event.getPlayer().getUniqueId());
+        }
     }
 
 }

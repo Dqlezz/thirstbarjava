@@ -9,8 +9,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
+import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /*
@@ -28,12 +31,17 @@ public class ConfigValue {
     private static double maxThirstBarValue = 20.0; // 20 = one row of hearts
     private static double maxHealthValue = 20.0; // 20 = one row of hearts
     private static double noThirstBarDamagePerTimerTick = 1.0;
-    private static double noThirstBarDamageTimerTickInSeconds = 1.0;
     private static double consumableThirstGain = 2.5;
     private static double globalMultiplier = 1.0;
     private static HashMap<Biome, Double> biomesSpecific;
     private static HashMap<String, HashMap<Biome, Double>> worldBiomesSpecific;
     private static boolean biomesEnabled = false;
+    private static boolean afkEnabled = false;
+    private static int timeOut = 300;
+    private static boolean afkChatReset = false;
+    private static boolean afkMoveReset = false;
+    private static boolean afkInteractReset = false;
+    private static boolean afkOnlyInWater = false;
 
     private ConfigValue() {
     }
@@ -49,9 +57,24 @@ public class ConfigValue {
         maxThirstBarValue = roundToHalf(config.getDouble("maxThirstBarValue"));
         maxHealthValue = roundToHalf(config.getDouble("maxHealthValue"));
         noThirstBarDamagePerTimerTick = roundToHalf(config.getDouble("noThirstBarDamagePerTimerTick"));
-        noThirstBarDamageTimerTickInSeconds = roundToHalf(config.getDouble("noThirstBarDamageTimerTick"));
 
         blacklistedWorlds = config.getStringList("blackListedWorlds");
+
+        if (!new File(plugin.getDataFolder() + "/afk.yml").exists()) {
+            plugin.saveResource("afk.yml", false);
+        }
+
+        File afkFile = new File(plugin.getDataFolder() + "/afk.yml");
+        YamlConfiguration afkConfig = YamlConfiguration.loadConfiguration(afkFile);
+
+        afkEnabled = afkConfig.getBoolean("enabled", false);
+        if (afkEnabled) {
+            timeOut = afkConfig.getInt("timeout", 300);
+            afkOnlyInWater = afkConfig.getBoolean("stop-only-in-water", false);
+            afkChatReset = afkConfig.getBoolean("modes.chat", true);
+            afkMoveReset = afkConfig.getBoolean("modes.move", true);
+            afkInteractReset = afkConfig.getBoolean("modes.interact", true);
+        }
 
         itemList.clear();
 
@@ -185,10 +208,6 @@ public class ConfigValue {
         return noThirstBarDamagePerTimerTick;
     }
 
-    public static double getNoThirstBarDamageTimerTickInSeconds() {
-        return noThirstBarDamageTimerTickInSeconds;
-    }
-
     public static double getThirstRemovedPerTimerTick() {
         return thirstRemovedPerTimerTick;
     }
@@ -199,6 +218,30 @@ public class ConfigValue {
 
     public static Map<ItemStack, Double> getItemList() {
         return itemList;
+    }
+
+    public static boolean isAfkEnabled() {
+        return afkEnabled;
+    }
+
+    public static int getTimeOut() {
+        return timeOut;
+    }
+
+    public static boolean isAfkChatReset() {
+        return afkChatReset;
+    }
+
+    public static boolean isAfkMoveReset() {
+        return afkMoveReset;
+    }
+
+    public static boolean isAfkInteractReset() {
+        return afkInteractReset;
+    }
+
+    public static boolean isAfkOnlyInWater() {
+        return afkOnlyInWater;
     }
 
 }
