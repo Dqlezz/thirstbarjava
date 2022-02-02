@@ -74,17 +74,21 @@ public class PlayerUtils {
      * @param player Player to set value for
      */
     public static void setAbsorptionHearts(Player player, float amount) {
-        if (isNewVersion) {
-            player.setAbsorptionAmount(amount);
+        if (amount <= 0) {
+            player.setHealth(0);
         } else {
-            try {
-                Object craftPlayer = craftPlayerClass.cast(player);
-                Method craftPlayerHandleMethod = craftPlayerClass.getDeclaredMethod("getHandle");
-                Object entityPlayer = craftPlayerHandleMethod.invoke(craftPlayer);
-                Method entityHumanAbsorptionMethod = entityHumanClass.getDeclaredMethod("setAbsorptionHearts", Float.TYPE);
-                entityHumanAbsorptionMethod.invoke(entityPlayer, amount);
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (isNewVersion) {
+                player.setAbsorptionAmount(amount);
+            } else {
+                try {
+                    Object craftPlayer = craftPlayerClass.cast(player);
+                    Method craftPlayerHandleMethod = craftPlayerClass.getDeclaredMethod("getHandle");
+                    Object entityPlayer = craftPlayerHandleMethod.invoke(craftPlayer);
+                    Method entityHumanAbsorptionMethod = entityHumanClass.getDeclaredMethod("setAbsorptionHearts", Float.TYPE);
+                    entityHumanAbsorptionMethod.invoke(entityPlayer, amount);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
